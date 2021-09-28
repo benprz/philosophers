@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 16:14:38 by bperez            #+#    #+#             */
-/*   Updated: 2021/09/28 19:09:41 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/09/28 20:00:43 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,8 +42,9 @@ typedef struct	s_philosophers
 
 t_list	*find_philosopher(t_list *current, int index)
 {
-	while (current->index != index)
-		current = current->next;
+	if (current)
+		while (current->index != index)
+			current = current->next;
 	return (current);
 }
 
@@ -55,7 +56,7 @@ void	print_structure(t_philosophers *e)
 	current = find_philosopher(e->current, 0);
 	printf("# t_philosophers\n\t number_of_philosophers = %d\n\t time_to_die = %d\n\t time_to_eat = %d\n\t time_to_sleep = %d\n\t number_of_times_each_philosopher_must_eat = %d\n\t mutex = %p\n\t current = %p\n", e->number_of_philosophers, e->time_to_die, e->time_to_eat, e->time_to_sleep, e->number_of_times_each_philosopher_must_eat, e->mutex, e->current);
 	i = 0;
-	while (i++ != e->number_of_philosophers)
+	while (i++ < e->number_of_philosophers)
 	{
 		printf("\t p%d = %p\n\t\t current->index = %d\n\t\t current->philosopher = %p\n\t\t current->prev = %p\n\t\t current->next = %p\n", current->index, current, current->index, current->philosopher, current->prev, current->next);
 		current = current->next;
@@ -98,21 +99,28 @@ void	free_philosophers(t_philosophers *e)
 
 	e->current = find_philosopher(e->current, 0);
 	i = 0;
-	while (i++ != e->number_of_philosophers)
+	if (e->current)
 	{
-		tmp = e->current->next;
-		free(e->current);
-		e->current = tmp;
+		while (i++ != e->number_of_philosophers)
+		{
+			tmp = e->current->next;
+			free(e->current);
+			e->current = tmp;
+		}
 	}
 }
 
 void	philosophers(t_philosophers *e)
 {
-	if (!add_philosopher(e))
+	int	i;
+
+	i = 0;
+	while (i++ < e->number_of_philosophers)
 	{
-		print_structure(e);
-		free_philosophers(e);
+		add_philosopher(e);
 	}
+	//print_structure(e);
+	//free_philosophers(e);
 }
 
 int	main(int argc, char **argv)
