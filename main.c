@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 16:14:38 by bperez            #+#    #+#             */
-/*   Updated: 2021/09/28 20:00:43 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/09/30 16:00:49 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@
 typedef struct	s_list
 {
 	int				index;
-	pthread_t		*philosopher;
+	pthread_t		thread;
 	struct s_list	*prev;
 	struct s_list	*next;
 }	t_list;
@@ -56,16 +56,21 @@ void	print_structure(t_philosophers *e)
 	current = find_philosopher(e->current, 0);
 	printf("# t_philosophers\n\t number_of_philosophers = %d\n\t time_to_die = %d\n\t time_to_eat = %d\n\t time_to_sleep = %d\n\t number_of_times_each_philosopher_must_eat = %d\n\t mutex = %p\n\t current = %p\n", e->number_of_philosophers, e->time_to_die, e->time_to_eat, e->time_to_sleep, e->number_of_times_each_philosopher_must_eat, e->mutex, e->current);
 	i = 0;
-	while (i++ < e->number_of_philosophers)
+	while (i != 1)
 	{
-		printf("\t p%d = %p\n\t\t current->index = %d\n\t\t current->philosopher = %p\n\t\t current->prev = %p\n\t\t current->next = %p\n", current->index, current, current->index, current->philosopher, current->prev, current->next);
+		printf("\t p%d = %p\n\t\t current->index = %d\n\t\t current->thread = %p\n\t\t current->prev = %p\n\t\t current->next = %p\n", current->index, current, current->index, current->thread, current->prev, current->next);
 		current = current->next;
+		if (current->index == 0)
+			i = 1;
 	}
 }
 
 void	*thread_start(void *arg)
 {
-	(void)arg;
+	t_philosophers	*e;
+
+	e = (t_philosophers *)arg;
+	printf("%p : %d is created\n", &e->current->thread, e->current->index);
 	return (arg);
 }
 
@@ -78,16 +83,22 @@ int	add_philosopher(t_philosophers *e)
 	{
 		bzero(philosopher, sizeof(t_list));
 		if (e->current == NULL)
+		{
 			e->current = philosopher;
+			e->current->index = 1;
+			e->current->next = e->current;
+		}
 		else
 		{
-			e->current = find_philosopher(e->current, e->number_of_philosophers - 1);
-			philosopher->next = e->current->next;
-			e->current->next = philosopher;
-			philosopher->prev = e->current;
 			philosopher->index = e->current->index + 1;
+			philosopher->next = e->current->next;
+			philosopher->prev = e->current;
+			e->current->next = philosopher;
+			philosopher->next->prev = philosopher;
 		}
-		return (0);
+		e->current = philosopher;
+		if (!pthread_create(&philosopher->thread, NULL, thread_start, e))
+			return (0);
 	}
 	return (-1);
 }
@@ -110,17 +121,19 @@ void	free_philosophers(t_philosophers *e)
 	}
 }
 
-void	philosophers(t_philosophers *e)
+int	philosophers(t_philosophers *e)
 {
 	int	i;
 
 	i = 0;
 	while (i++ < e->number_of_philosophers)
 	{
-		add_philosopher(e);
+		if (add_philosopher(e) == -1)
+			return (-1);
+		pthread_join(e->current->thread, NULL);
 	}
-	//print_structure(e);
-	//free_philosophers(e);
+	print_structure(e);
+	return (0);
 }
 
 int	main(int argc, char **argv)
@@ -138,7 +151,9 @@ int	main(int argc, char **argv)
 		if (argc == 5)
 			e.number_of_times_each_philosopher_must_eat = atoi(argv[5]);
 		*/
-		philosophers(&e);
+		if (philosophers(&e) == -1)
+			printf("Error\n");
+		free_philosophers(&e);
 	}
 	return (0);
 }
