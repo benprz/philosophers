@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 16:14:38 by bperez            #+#    #+#             */
-/*   Updated: 2021/10/05 12:29:22 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/10/06 18:22:53 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,8 +17,6 @@
 #include <sys/time.h>
 #include <unistd.h>
 
-#include "libft.h"
-
 // memset, printf, malloc, free, write
 // usleep, gettimeofday
 // pthread_create, pthread_detach, pthread_join
@@ -28,10 +26,7 @@ typedef struct	s_philosopher
 {
 	int						id;
 	pthread_t				thread;
-	int						forks;
-	int						is_eating;
-	int						is_sleeping;
-	int						is_thinking;
+	pthread_mutex_t			fork;
 	int						number_of_times_he_ate;
 	struct s_philosopher	*prev;
 	struct s_philosopher	*next;
@@ -88,50 +83,20 @@ void	print_status(t_philosophers *e, t_philosopher *philosopher, char *status)
 	printf("%lu\t%d %s\n", get_current_timestamp() - e->starting_timestamp, philosopher->id, status);
 }
 
-void	philosopher_take_forks(t_philosophers *e, t_philosopher *philosopher)
-{
-	while (philosopher->forks != 2)
-	{
-		if (philosopher->forks != 2)
-		{
-			if (philosopher->prev->is_eating == 0 && philosopher->prev->forks > 0)
-			{
-				print_status(e, philosopher, "has taken a fork");
-				philosopher->prev->forks--;
-				philosopher->forks++;
-			}
-		}
-		if (philosopher->forks != 2)
-		{
-			if (philosopher->next->is_eating == 0 && philosopher->next->forks > 0)
-			{
-				print_status(e, philosopher, "has taken a fork");
-				philosopher->next->forks--;
-				philosopher->forks++;
-			}
-		}
-	}
-}
-
 void	philosopher_eat(t_philosophers *e, t_philosopher *philosopher)
 {
 	//philosopher_take_forks(e, philosopher);
-	print_status(e, philosopher, "is eating");
-	philosopher->is_eating = 1;
+	//print_status(e, philosopher, "is eating");
 	usleep(e->time_to_eat);
-	philosopher->is_eating = 0;
 	if (++philosopher->number_of_times_he_ate == e->number_of_times_each_philosopher_must_eat)
 		e->number_of_philosophers_that_ate++;
-	printf("for the %dth times\n", philo->number_of_times_he_ate);
 }
 
 void	philosopher_sleep(t_philosophers *e, t_philosopher *philosopher)
 {
-	print_status(e, philosopher, "is sleeping");
-	philosopher->is_sleeping = 1;
+	//print_status(e, philosopher, "is sleeping");
 	usleep(e->time_to_sleep);
-	philosopher->is_sleeping = 0;
-	print_status(e, philosopher, "is thinking");
+	//print_status(e, philosopher, "is thinking");
 }
 
 void	*thread_start(void *arg)
@@ -141,7 +106,8 @@ void	*thread_start(void *arg)
 
 	e = (t_philosophers *)arg;
 	philosopher = e->current;
-	while (e->did_a_philosopher_die != 1 ||\
+	print_status(e, philosopher, "has started");
+	while (e->did_a_philosopher_die != 1 &&\
 			e->number_of_philosophers_that_ate != e->number_of_philosophers)
 	{
 		philosopher_eat(e, philosopher);
@@ -160,9 +126,8 @@ int	add_philosopher(t_philosophers *e)
 		bzero(philosopher, sizeof(t_philosopher));
 		if (e->current == NULL)
 		{
-			e->current = philosopher;
-			e->current->id = 1;
-			e->current->next = e->current;
+			philosopher->id = 1;
+			philosopher->next = e->current;
 		}
 		else
 		{
@@ -172,9 +137,9 @@ int	add_philosopher(t_philosophers *e)
 			e->current->next = philosopher;
 			philosopher->next->prev = philosopher;
 		}
-		philosopher->forks = 1;
 		e->current = philosopher;
-		if (!pthread_create(&philosopher->thread, NULL, thread_start, e))
+		if (!pthread_create(&philosopher->thread, NULL, thread_start, e) &&\
+			!pthread_mutex_init(philosopher->fork, NULL))
 			return (0);
 	}
 	return (-1);
@@ -238,7 +203,7 @@ int	main(int argc, char **argv)
 		if (argc == 6)
 			e.number_of_times_each_philosopher_must_eat = atoi(argv[5]);
 		if (init_philosophers(&e) == -1)
-			printf("Error\n");
+			printf("Error");
 		join_philosophers(&e);
 		free_philosophers(&e);
 	}
