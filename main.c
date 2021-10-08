@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 16:14:38 by bperez            #+#    #+#             */
-/*   Updated: 2021/10/06 18:22:53 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/10/07 02:33:14 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,6 +27,7 @@ typedef struct	s_philosopher
 	int						id;
 	pthread_t				thread;
 	pthread_mutex_t			fork;
+	int						is_using_his_fork;
 	int						number_of_times_he_ate;
 	struct s_philosopher	*prev;
 	struct s_philosopher	*next;
@@ -83,10 +84,18 @@ void	print_status(t_philosophers *e, t_philosopher *philosopher, char *status)
 	printf("%lu\t%d %s\n", get_current_timestamp() - e->starting_timestamp, philosopher->id, status);
 }
 
+void	philosopher_pick_forks(t_philosopher *philosopher)
+{
+	while ()
+	{
+		if (philosopher->
+	}
+}
+
 void	philosopher_eat(t_philosophers *e, t_philosopher *philosopher)
 {
-	//philosopher_take_forks(e, philosopher);
-	//print_status(e, philosopher, "is eating");
+	philosopher_pick_forks(philosopher);
+	print_status(e, philosopher, "is eating");
 	usleep(e->time_to_eat);
 	if (++philosopher->number_of_times_he_ate == e->number_of_times_each_philosopher_must_eat)
 		e->number_of_philosophers_that_ate++;
