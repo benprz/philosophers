@@ -33,7 +33,6 @@ norm:
 
 clean:
 	/bin/rm -rf $(OBJ_DIR)
-	$(MAKE) -C $(LIBFT_DIR) fclean
 
 fclean: clean
 	/bin/rm -f $(NAME)

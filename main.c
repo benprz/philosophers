@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 16:14:38 by bperez            #+#    #+#             */
-/*   Updated: 2021/10/07 02:33:14 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/10/09 02:52:40 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -27,7 +27,7 @@ typedef struct	s_philosopher
 	int						id;
 	pthread_t				thread;
 	pthread_mutex_t			fork;
-	int						is_using_his_fork;
+	int						last_eat_timestamp;
 	int						number_of_times_he_ate;
 	struct s_philosopher	*prev;
 	struct s_philosopher	*next;
@@ -43,7 +43,7 @@ typedef struct	s_philosophers
 	int				time_to_sleep;
 	int				number_of_times_each_philosopher_must_eat;
 	int				number_of_philosophers_that_ate;
-	int				did_a_philosopher_die;
+	int				who_died;
 }	t_philosophers;
 
 unsigned long	get_current_timestamp(void)
@@ -84,28 +84,26 @@ void	print_status(t_philosophers *e, t_philosopher *philosopher, char *status)
 	printf("%lu\t%d %s\n", get_current_timestamp() - e->starting_timestamp, philosopher->id, status);
 }
 
-void	philosopher_pick_forks(t_philosopher *philosopher)
-{
-	while ()
-	{
-		if (philosopher->
-	}
-}
-
 void	philosopher_eat(t_philosophers *e, t_philosopher *philosopher)
 {
-	philosopher_pick_forks(philosopher);
+	pthread_mutex_lock(&philosopher->fork);
+	print_status(e, philosopher, "has taken a fork");
+	pthread_mutex_lock(&philosopher->next->fork);
+	print_status(e, philosopher, "has taken a fork");
 	print_status(e, philosopher, "is eating");
 	usleep(e->time_to_eat);
+	pthread_mutex_unlock(&philosopher->fork);
+	pthread_mutex_unlock(&philosopher->next->fork);
+	philosopher->last_eat_timestamp = get_current_timestamp();
 	if (++philosopher->number_of_times_he_ate == e->number_of_times_each_philosopher_must_eat)
 		e->number_of_philosophers_that_ate++;
 }
 
 void	philosopher_sleep(t_philosophers *e, t_philosopher *philosopher)
 {
-	//print_status(e, philosopher, "is sleeping");
+	print_status(e, philosopher, "is sleeping");
 	usleep(e->time_to_sleep);
-	//print_status(e, philosopher, "is thinking");
+	print_status(e, philosopher, "is thinking");
 }
 
 void	*thread_start(void *arg)
@@ -115,12 +113,15 @@ void	*thread_start(void *arg)
 
 	e = (t_philosophers *)arg;
 	philosopher = e->current;
-	print_status(e, philosopher, "has started");
-	while (e->did_a_philosopher_die != 1 &&\
+	while (e->who_died == 0 &&\
 			e->number_of_philosophers_that_ate != e->number_of_philosophers)
 	{
-		philosopher_eat(e, philosopher);
-		philosopher_sleep(e, philosopher);
+		if (e->who_died == 0 &&\
+				e->number_of_philosophers_that_ate != e->number_of_philosophers)
+			philosopher_eat(e, philosopher);
+		if (e->who_died == 0 &&\
+				e->number_of_philosophers_that_ate != e->number_of_philosophers)
+			philosopher_sleep(e, philosopher);
 	}
 	return (arg);
 }
@@ -136,7 +137,7 @@ int	add_philosopher(t_philosophers *e)
 		if (e->current == NULL)
 		{
 			philosopher->id = 1;
-			philosopher->next = e->current;
+			philosopher->next = philosopher;
 		}
 		else
 		{
@@ -147,8 +148,7 @@ int	add_philosopher(t_philosophers *e)
 			philosopher->next->prev = philosopher;
 		}
 		e->current = philosopher;
-		if (!pthread_create(&philosopher->thread, NULL, thread_start, e) &&\
-			!pthread_mutex_init(philosopher->fork, NULL))
+		if (!pthread_mutex_init(&philosopher->fork, NULL))
 			return (0);
 	}
 	return (-1);
@@ -166,6 +166,7 @@ void	free_philosophers(t_philosophers *e)
 		while (i++ != e->number_of_philosophers)
 		{
 			tmp = e->current->next;
+			//pthread_mutex_destroy(&e->current->fork);
 			free(e->current);
 			e->current = tmp;
 		}
@@ -193,6 +194,15 @@ int	init_philosophers(t_philosophers *e)
 			return (-1);
 		usleep(100);
 	}
+	i = 0;
+	e->current = find_philosopher(e->current, 1);
+	while (i++ < e->number_of_philosophers)
+	{
+		if (pthread_create(&e->current->thread, NULL, thread_start, e))
+			return (-1);
+		e->current = e->current->next;
+		usleep(100);
+	}
 	//print_structure(e);
 	return (0);
 }
@@ -214,6 +224,11 @@ int	main(int argc, char **argv)
 		if (init_philosophers(&e) == -1)
 			printf("Error");
 		join_philosophers(&e);
+		if (e.who_died > 0)
+		{
+			e.current = find_philosopher(e.current, e.who_died);
+			print_status(&e, e.current, "died");
+		}
 		free_philosophers(&e);
 	}
 	return (0);
