@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/09/27 16:14:38 by bperez            #+#    #+#             */
-/*   Updated: 2021/10/09 02:52:40 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/10/10 03:58:31 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -113,17 +113,38 @@ void	*thread_start(void *arg)
 
 	e = (t_philosophers *)arg;
 	philosopher = e->current;
-	while (e->who_died == 0 &&\
-			e->number_of_philosophers_that_ate != e->number_of_philosophers)
+	philosopher->last_eat_timestamp = get_current_timestamp();
+	while (e->who_died == 0)
 	{
-		if (e->who_died == 0 &&\
-				e->number_of_philosophers_that_ate != e->number_of_philosophers)
-			philosopher_eat(e, philosopher);
-		if (e->who_died == 0 &&\
-				e->number_of_philosophers_that_ate != e->number_of_philosophers)
-			philosopher_sleep(e, philosopher);
+		philosopher_eat(e, philosopher);
+		philosopher_sleep(e, philosopher);
 	}
 	return (arg);
+}
+
+int	monitor_philosophers(t_philosophers *e)
+{
+	int	i;
+
+	while (1)
+	{
+		i = 0;
+		while (i++ < e->number_of_philosophers)
+		{
+			printf("%d %lu %d %lu\n", e->current->last_eat_timestamp, get_current_timestamp(), e->time_to_die, e->current->last_eat_timestamp - get_current_timestamp());
+			if (e->current->last_eat_timestamp - get_current_timestamp() > e->time_to_die)
+			{
+				print_status(e, e->current, "has died");
+				return (0);
+			}
+			e->current = e->current->next;
+		}
+		if (e->number_of_philosophers_that_ate == e->number_of_philosophers)
+		{
+			return (0);
+		}
+		e->current = e->current->next;
+	}
 }
 
 int	add_philosopher(t_philosophers *e)
@@ -166,7 +187,8 @@ void	free_philosophers(t_philosophers *e)
 		while (i++ != e->number_of_philosophers)
 		{
 			tmp = e->current->next;
-			//pthread_mutex_destroy(&e->current->fork);
+			pthread_mutex_destroy(&e->current->fork);
+			pthread_detach(e->current->thread);
 			free(e->current);
 			e->current = tmp;
 		}
@@ -195,13 +217,13 @@ int	init_philosophers(t_philosophers *e)
 		usleep(100);
 	}
 	i = 0;
-	e->current = find_philosopher(e->current, 1);
+	e->current = e->current->next;
 	while (i++ < e->number_of_philosophers)
 	{
 		if (pthread_create(&e->current->thread, NULL, thread_start, e))
 			return (-1);
+		usleep(50);
 		e->current = e->current->next;
-		usleep(100);
 	}
 	//print_structure(e);
 	return (0);
@@ -223,12 +245,8 @@ int	main(int argc, char **argv)
 			e.number_of_times_each_philosopher_must_eat = atoi(argv[5]);
 		if (init_philosophers(&e) == -1)
 			printf("Error");
-		join_philosophers(&e);
-		if (e.who_died > 0)
-		{
-			e.current = find_philosopher(e.current, e.who_died);
-			print_status(&e, e.current, "died");
-		}
+		//join_philosophers(&e);
+		monitor_philosophers(&e);
 		free_philosophers(&e);
 	}
 	return (0);
