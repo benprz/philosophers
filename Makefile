@@ -4,10 +4,13 @@ NAME = philo
 CC = gcc
 CFLAGS = -g #-Wall -Wextra -Werror -Wpedantic 
 INC_DIR = includes/
-INC = 
+INC = philosophers.h
 
-SRC_DIR = ./
-SRC =	main.c
+SRC_DIR = src/
+SRC =	main.c\
+		routine.c\
+		utils.c\
+		libft_functions.c
 
 OBJ_DIR = .obj/
 OBJ = $(SRC:%.c=$(OBJ_DIR)%.o)
