@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/11 15:21:07 by bperez            #+#    #+#             */
-/*   Updated: 2021/10/11 16:53:01 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/10/16 19:07:18 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,14 +19,16 @@
 
 int	monitor_philosophers(t_philosophers *e)
 {
-	int	i;
+	int				i;
+	unsigned long	current_time;
 
 	while (1)
 	{
 		i = 0;
 		while (i++ < e->number_of_philosophers)
 		{
-			if (get_current_timestamp() - e->current->last_eat_timestamp > \
+			current_time = get_current_timestamp();
+			if (current_time - e->current->last_eat_timestamp >= \
 				e->time_to_die)
 			{
 				print_status(e, e->current, "has died");
@@ -34,9 +36,11 @@ int	monitor_philosophers(t_philosophers *e)
 			}
 			e->current = e->current->next;
 		}
+		printf("%d %d\n", e->number_of_philosophers_that_ate, e->number_of_philosophers);
 		if (e->number_of_philosophers_that_ate == e->number_of_philosophers)
 			return (0);
 		e->current = e->current->next;
+		usleep(50);
 	}
 }
 
@@ -100,6 +104,7 @@ int	init_philosophers(t_philosophers *e)
 	}
 	i = 0;
 	e->current = e->current->next;
+	e->starting_timestamp = get_current_timestamp();
 	while (i++ < e->number_of_philosophers)
 	{
 		if (pthread_create(&e->current->thread, NULL, thread_start, e))
@@ -117,17 +122,23 @@ int	main(int argc, char **argv)
 	ft_bzero(&e, sizeof(t_philosophers));
 	if (argc == 5 || argc == 6)
 	{
-		e.starting_timestamp = get_current_timestamp();
-		e.number_of_philosophers = ft_atoi(argv[1]);
-		e.time_to_die = ft_atoi(argv[2]);
-		e.time_to_eat = ft_atoi(argv[3]) * 1000;
-		e.time_to_sleep = ft_atoi(argv[4]) * 1000;
-		if (argc == 6)
-			e.number_of_times_each_philosopher_must_eat = ft_atoi(argv[5]);
-		if (init_philosophers(&e) == -1)
-			printf("Error");
-		monitor_philosophers(&e);
-		free_philosophers(&e);
+		if (check_arguments(argc, argv) == 1)
+		{
+			e.number_of_philosophers = ft_atol(argv[1]);
+			e.time_to_die = ft_atol(argv[2]);
+			e.time_to_eat = ft_atol(argv[3]) * 1000;
+			e.time_to_sleep = ft_atol(argv[4]) * 1000;
+			if (argc == 6)
+				e.number_of_times_each_philosopher_must_eat = ft_atol(argv[5]);
+			if (init_philosophers(&e) == 0)
+			{
+				monitor_philosophers(&e);
+				free_philosophers(&e);
+				return (0);
+			}
+		}
 	}
-	return (0);
+	printf("Error\nusage: ./philo number_of_philosophers time_to_die \
+time_to_eat time_to_sleep [number_of_times_each_philosopher_must_eat]\n");
+	return (-1);
 }

@@ -6,7 +6,7 @@
 /*   By: bperez <bperez@student.42lyon.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/11 15:25:46 by bperez            #+#    #+#             */
-/*   Updated: 2021/10/11 16:25:05 by bperez           ###   ########lyon.fr   */
+/*   Updated: 2021/10/16 13:44:33 by bperez           ###   ########lyon.fr   */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ void	philosopher_eat(t_philosophers *e, t_philosopher *philosopher)
 	pthread_mutex_lock(&philosopher->next->fork);
 	print_status(e, philosopher, "has taken a fork");
 	print_status(e, philosopher, "is eating");
-	usleep(e->time_to_eat);
+	custom_usleep(e->time_to_eat);
 	pthread_mutex_unlock(&philosopher->fork);
 	pthread_mutex_unlock(&philosopher->next->fork);
 	philosopher->last_eat_timestamp = get_current_timestamp();
@@ -34,7 +34,7 @@ void	philosopher_eat(t_philosophers *e, t_philosopher *philosopher)
 void	philosopher_sleep(t_philosophers *e, t_philosopher *philosopher)
 {
 	print_status(e, philosopher, "is sleeping");
-	usleep(e->time_to_sleep);
+	custom_usleep(e->time_to_sleep);
 	print_status(e, philosopher, "is thinking");
 }
 
