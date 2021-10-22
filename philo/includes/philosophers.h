@@ -39,7 +39,7 @@ typedef struct s_philosophers
 	uint64_t		time_to_sleep;
 	int				number_of_times_each_philosopher_must_eat;
 	int				number_of_philosophers_that_ate;
-	int				who_died;
+	int				death;
 }	t_philosophers;
 
 void			ft_bzero(void *s, size_t n);

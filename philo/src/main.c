@@ -31,13 +31,14 @@ int	monitor_philosophers(t_philosophers *e)
 			if (current_time - e->current->last_eat_timestamp >= \
 				e->time_to_die)
 			{
+				e->death++;
 				print_status(e, e->current, "has died");
 				return (0);
 			}
 			e->current = e->current->next;
 		}
-		printf("%d %d\n", e->number_of_philosophers_that_ate, e->number_of_philosophers);
-		if (e->number_of_philosophers_that_ate == e->number_of_philosophers)
+		//printf("%d %d\n", e->number_of_philosophers_that_ate, e->number_of_philosophers);
+		if (e->number_of_philosophers_that_ate >= e->number_of_philosophers)
 			return (0);
 		e->current = e->current->next;
 		usleep(50);
