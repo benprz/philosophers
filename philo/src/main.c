@@ -20,7 +20,7 @@
 int	monitor_philosophers(t_philosophers *e)
 {
 	int				i;
-	unsigned long	current_time;
+	uint64_t		current_time;
 
 	while (1)
 	{
@@ -37,7 +37,6 @@ int	monitor_philosophers(t_philosophers *e)
 			}
 			e->current = e->current->next;
 		}
-		//printf("%d %d\n", e->number_of_philosophers_that_ate, e->number_of_philosophers);
 		if (e->number_of_philosophers_that_ate >= e->number_of_philosophers)
 			return (0);
 		e->current = e->current->next;
@@ -127,8 +126,8 @@ int	main(int argc, char **argv)
 		{
 			e.number_of_philosophers = ft_atol(argv[1]);
 			e.time_to_die = ft_atol(argv[2]);
-			e.time_to_eat = ft_atol(argv[3]) * 1000;
-			e.time_to_sleep = ft_atol(argv[4]) * 1000;
+			e.time_to_eat = ft_atol(argv[3]);
+			e.time_to_sleep = ft_atol(argv[4]);
 			if (argc == 6)
 				e.number_of_times_each_philosopher_must_eat = ft_atol(argv[5]);
 			if (init_philosophers(&e) == 0)

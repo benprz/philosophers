@@ -26,7 +26,7 @@ void	philosopher_eat(t_philosophers *e, t_philosopher *philosopher)
 		if (e->death == 0)
 		{
 			print_status(e, philosopher, "is eating");
-			usleep(e->time_to_eat);
+			wait_delay(e->time_to_eat);
 		}
 		pthread_mutex_unlock(&philosopher->fork);
 		pthread_mutex_unlock(&philosopher->next->fork);
@@ -42,7 +42,7 @@ void	philosopher_sleep(t_philosophers *e, t_philosopher *philosopher)
 	if (e->death == 0)
 	{
 		print_status(e, philosopher, "is sleeping");
-		usleep(e->time_to_sleep);
+		wait_delay(e->time_to_sleep);
 		print_status(e, philosopher, "is thinking");
 	}
 }
@@ -55,17 +55,10 @@ void	*thread_start(void *arg)
 	e = (t_philosophers *)arg;
 	philosopher = e->current;
 	philosopher->last_eat_timestamp = get_current_timestamp();
-	print_status(e, philosopher, "has been launched");
-	print_status(e, philosopher, "is eating");
-	usleep(100000);
-	print_status(e, philosopher, "is sleeping");
-	usleep(100000);
-	/*
 	while (e->death == 0)
 	{
 		philosopher_eat(e, philosopher);
 		philosopher_sleep(e, philosopher);
 	}
-	*/
 	return (arg);
 }

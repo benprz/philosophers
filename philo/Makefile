@@ -2,7 +2,7 @@
 
 NAME = philo
 CC = gcc
-CFLAGS = -g #-Wall -Wextra -Werror -Wpedantic 
+CFLAGS = -g3 -Wall -Wextra -Werror -Wpedantic 
 INC_DIR = includes/
 INC = philosophers.h
 

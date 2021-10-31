@@ -46,7 +46,7 @@ void			ft_bzero(void *s, size_t n);
 int				ft_atol(const char *str);
 int				ft_is_number(const char *str);
 
-void			custom_usleep(int delay);
+void			wait_delay(uint64_t delay);
 uint64_t		get_current_timestamp(void);
 int				check_arguments(int argc, char **argv);
 t_philosopher	*find_philosopher(t_philosopher *current, int id);
